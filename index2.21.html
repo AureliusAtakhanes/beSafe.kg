@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeSafe - Карта преступлений</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: #333333;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        select, input[type="date"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            color: black;
+        }
+
+        .source-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .source-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .source-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .button {
+            background-color: #B44C4C;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .button:hover {
+            filter: brightness(0.9);
+            transition: filter 0.3s ease;
+        }
+
+        .about-link {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: auto;
+        }
+
+        .about-link:hover {
+            text-decoration: underline;
+        }
+
+        .map-container {
+            flex-grow: 1;
+            position: relative;
+            height: 100vh;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .auth-buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .auth-button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            background: white;
+            color: #B44C4C;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .auth-button:hover {
+            background: #f5f5f5;
+        }
+
+        /* Стили для кнопки определения местоположения */
+        .location-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .location-button:hover {
+            background: #f5f5f5;
+        }
+
+        .location-button img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            width: 400px;
+            color: black;
+        }
+
+        #addMarkerModal {
+            top: auto;
+            left: auto;
+            bottom: 20px;
+            right: 20px;
+            transform: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            width: 400px;
+            color: black;
+        }
+
+        .modal h3 {
+            margin-bottom: 15px;
+        }
+
+        .modal-form input,
+        .modal-form select,
+        .modal-form textarea {
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .modal-form textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+                overflow-y: auto;
+            }
+
+            .map-container {
+                height: 60vh;
+            }
+
+            .modal {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="#" class="logo">BeSafe</a>
+        
+        <div class="form-group">
+            <label>Тип преступления</label>
+            <select>
+                <option value="all">Все типы</option>
+                <option value="theft">Кража</option>
+                <option value="violence">Насилие</option>
+                <option value="fraud">Мошенничество</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Период</label>
+            <input type="date" placeholder="От" style="margin-bottom: 15px;">
+            <input type="date" placeholder="До">
+        </div>
+
+        <div class="form-group">
+            <label>Источник</label>
+            <div class="source-options">
+                <div class="source-option">
+                    <input type="checkbox" id="official" checked>
+                    <label for="official">Официальный</label>
+                </div>
+                <div class="source-option">
+                    <input type="checkbox" id="unofficial" checked>
+                    <label for="unofficial">Неофициальный</label>
+                </div>
+            </div>
+        </div>
+
+        <button class="button" onclick="handleAddMarker()">Сообщить о преступлении</button>
+        <button class="button" onclick="window.open('https://wa.me/+996999132667')" style="background-color: #25D366; margin-top: 10px;">Срочная связь</button>
+        <button class="button" style="background-color: #666666">Показать список меток</button>
+        
+        <a href="#" class="about-link">О проекте</a>
+    </div>
+
+    <div class="map-container">
+        <div class="auth-buttons">
+            <button class="auth-button" onclick="showAuthModal('login')">Войти</button>
+            <button class="auth-button" onclick="showAuthModal('register')">Регистрация</button>
+        </div>
+        <div id="map"></div>
+        <!-- Кнопка определения местоположения -->
+        <button class="location-button" onclick="showUserLocation()" title="Показать мое местоположение">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B44C4C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.94 11A7.906 7.906 0 0 0 13 4.06"></path>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="M4.06 11A7.906 7.906 0 0 1 11 4.06"></path>
+                <path d="M4.06 13A7.906 7.906 0 0 0 11 19.94"></path>
+                <path d="M19.94 13A7.906 7.906 0 0 1 13 19.94"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Модальное окно добавления метки -->
+    <div class="modal" id="addMarkerModal">
+        <h3>Добавить метку</h3>
+        <form class="modal-form">
+            <select>
+                <option value="">Выберите тип преступления</option>
+                <option value="theft">Кража</option>
+                <option value="violence">Насилие</option>
+                <option value="fraud">Мошенничество</option>
+            </select>
+            
+            <input type="text" placeholder="Адрес">
+            <input type="date" placeholder="Дата происшествия">
+            <textarea placeholder="Описание инцидента"></textarea>
+            
+            <button type="submit" class="button">Добавить</button>
+            <button type="button" class="button" style="background: #666;" onclick="hideModal('addMarkerModal')">Отмена</button>
+        </form>
+    </div>
+
+    <!-- Модальное окно авторизации -->
+    <div class="modal" id="authModal">
+        <h3 id="authTitle">Войти</h3>
+        <form class="modal-form" id="authForm">
+            <div id="nameField" style="display: none;">
+                <input type="text" name="name" placeholder="Имя" required>
+            </div>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <button type="submit" class="button" id="authSubmitButton">Войти</button>
+            <button type="button" class="button" style="background: #666;" onclick="hideModal('authModal')">Отмена</button>
+        </form>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <script>
+        // Хранение данных пользователей (в реальном проекте это должно быть на сервере)
+        const users = [
+            { email: 'test@test.com', password: '123456' }
+        ];
+
+        // Флаг авторизации и текущий пользователь
+        let isAuthenticated = false;
+        let currentUser = null;
+        let currentMarker = null;
+        let userLocationMarker = null; // Маркер местоположения пользователя
+        let markers = [];
+
+        // Границы Кыргызстана
+        const kyrgyzstanBounds = L.latLngBounds(
+            [39.172, 69.276], // Юго-западная точка
+            [43.238, 80.283]  // Северо-восточная точка
+        );
+
+        // Инициализация карты
+        var map = L.map('map', {
+            center: [42.8746, 74.5698], // Центр Бишкека
+            zoom: 7,
+            minZoom: 6,
+            maxZoom: 18,
+            maxBounds: kyrgyzstanBounds,
+            maxBoundsViscosity: 1.0
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Функция определения местоположения пользователя
+        function showUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        
+                        // Проверяем, находится ли позиция в границах Кыргызстана
+                        if (kyrgyzstanBounds.contains([latitude, longitude])) {
+                            // Удаляем предыдущий маркер, если он существует
+                            if (userLocationMarker) {
+                                map.removeLayer(userLocationMarker);
+                            }
+                            
+                            // Создаем новый маркер
+                            userLocationMarker = L.circleMarker([latitude, longitude], {
+                                radius: 8,
+                                fillColor: '#B44C4C',
+                                fillOpacity: 1,
+                                color: '#fff',
+                                weight: 2
+                            }).addTo(map);
+                            
+                            // Центрируем карту на местоположении пользователя
+                            map.setView([latitude, longitude], 14);
+                        } else {
+                            alert('Ваше местоположение находится за пределами Кыргызстана');
+                        }
+                    },
+                    (error) => {
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                alert('Для определения местоположения необходимо разрешить доступ к геолокации');
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                alert('Информация о вашем местоположении недоступна');
+                                break;
+                            case error.TIMEOUT:
+                                alert('Время ожидания определения местоположения истекло');
+                                break;
+                            default:
+                                alert('Произошла ошибка при определении местоположения');
+                        }
+                    }
+                );
+            } else {
+                alert('Ваш браузер не поддерживает определение местоположения');
+            }
+        }
+
+        // Функции для работы с модальными окнами
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        function showAuthModal(type) {
+            const modal = document.getElementById('authModal');
+            const nameField = document.getElementById('nameField');
+            const authTitle = document.getElementById('authTitle');
+            const submitButton = document.getElementById('authSubmitButton');
+            const form = document.getElementById('authForm');
+            
+            form.reset();
+
+            if (type === 'login') {
+                nameField.style.display = 'none';
+                authTitle.textContent = 'Войти';
+                submitButton.textContent = 'Войти';
+            } else {
+                nameField.style.display = 'block';
+                authTitle.textContent = 'Регистрация';
+                submitButton.textContent = 'Зарегистрироваться';
+            }
+            
+            modal.setAttribute('data-type', type);
+            showModal('authModal');
+        }
+
+        function handleAddMarker() {
+            if (!isAuthenticated) {
+                showAuthModal('login');
+                return;
+            }
+            showModal('addMarkerModal');
+        }
+
+        document.getElementById('authForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const type = document.getElementById('authModal').getAttribute('data-type');
+            const email = this.email.value;
+            const password = this.password.value;
+            
+            if (type === 'register') {
+                // Проверяем, не существует ли уже такой email
+                if (users.some(u => u.email === email)) {
+                    alert('Пользователь с таким email уже существует');
+                    return;
+                }
+                
+                // Добавляем нового пользователя
+                const name = this.name.value || email;
+                const newUser = { email, password, name };
+                users.push(newUser);
+                
+                // Автоматически логиним нового пользователя
+                isAuthenticated = true;
+                currentUser = newUser;
+                hideModal('authModal');
+                updateAuthButtons();
+                alert('Регистрация успешна!');
+            } else {
+                // Логика входа
+                const user = users.find(u => u.email === email && u.password === password);
+                
+                if (user) {
+                    isAuthenticated = true;
+                    currentUser = user;
+                    hideModal('authModal');
+                    updateAuthButtons();
+                } else {
+                    alert('Неверный email или пароль');
+                }
+            }
+        });
+
+        document.querySelector('#addMarkerModal form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Получаем значения из формы
+            const crimeType = this.querySelector('select').value;
+            const address = this.querySelector('input[type="text"]').value;
+            const date = this.querySelector('input[type="date"]').value;
+            const description = this.querySelector('textarea').value;
+
+            // В реальном приложении здесь был бы запрос к серверу
+            const report = {
+                crimeType,
+                address,
+                date,
+                description,
+                status: 'pending',
+                userId: currentUser?.email
+            };
+            
+            console.log('Отправлено на модерацию:', report);
+            
+            // Очищаем форму
+            this.reset();
+            
+            // Закрываем модальное окно
+            hideModal('addMarkerModal');
+            
+            alert('Сообщение успешно отправлено на модерацию');
+        });
+
+        function updateAuthButtons() {
+            const authButtons = document.querySelector('.auth-buttons');
+            if (isAuthenticated) {
+                authButtons.innerHTML = `
+                    <span class="auth-button">Привет, ${currentUser.email}</span>
+                    <button class="auth-button" onclick="logout()">Выйти</button>
+                `;
+            } else {
+                authButtons.innerHTML = `
+                    <button class="auth-button" onclick="showAuthModal('login')">Войти</button>
+                    <button class="auth-button" onclick="showAuthModal('register')">Регистрация</button>
+                `;
+            }
+        }
+
+        function logout() {
+            isAuthenticated = false;
+            currentUser = null;
+            updateAuthButtons();
+        }
+
+        // Инициализация начального состояния
+        updateAuthButtons();
+    </script>
+</body>
+</html>
