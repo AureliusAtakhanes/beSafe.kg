@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,7 +47,8 @@
             color: white;
         }
 
-        select, input[type="date"] {
+        select,
+        input[type="date"] {
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -128,7 +130,7 @@
             font-size: 14px;
             background: white;
             color: #B44C4C;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .auth-button:hover {
@@ -145,7 +147,7 @@
             border: none;
             border-radius: 4px;
             background: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -170,7 +172,7 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 1000;
             width: 400px;
             color: black;
@@ -185,7 +187,7 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 1000;
             width: 400px;
             color: black;
@@ -217,7 +219,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
 
@@ -243,10 +245,11 @@
         }
     </style>
 </head>
+
 <body>
     <div class="sidebar">
         <a href="#" class="logo">BeSafe</a>
-        
+
         <div class="form-group">
             <label>Тип преступления</label>
             <select>
@@ -278,9 +281,10 @@
         </div>
 
         <button class="button" onclick="handleAddMarker()">Сообщить о преступлении</button>
-        <button class="button" onclick="window.open('https://wa.me/+996999132667')" style="background-color: #25D366; margin-top: 10px;">Срочная связь</button>
+        <button class="button" onclick="window.open('https://wa.me/+996999132667')"
+            style="background-color: #25D366; margin-top: 10px;">Срочная связь</button>
         <button class="button" style="background-color: #666666">Показать список меток</button>
-        
+
         <a href="#" class="about-link">О проекте</a>
     </div>
 
@@ -292,7 +296,8 @@
         <div id="map"></div>
         <!-- Кнопка определения местоположения -->
         <button class="location-button" onclick="showUserLocation()" title="Показать мое местоположение">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B44C4C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="#B44C4C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.94 11A7.906 7.906 0 0 0 13 4.06"></path>
                 <path d="M12 2v2"></path>
@@ -314,13 +319,14 @@
                 <option value="violence">Насилие</option>
                 <option value="fraud">Мошенничество</option>
             </select>
-            
+
             <input type="text" placeholder="Адрес">
             <input type="date" placeholder="Дата происшествия">
             <textarea placeholder="Описание инцидента"></textarea>
-            
+
             <button type="submit" class="button">Добавить</button>
-            <button type="button" class="button" style="background: #666;" onclick="hideModal('addMarkerModal')">Отмена</button>
+            <button type="button" class="button" style="background: #666;"
+                onclick="hideModal('addMarkerModal')">Отмена</button>
         </form>
     </div>
 
@@ -334,7 +340,8 @@
             <input type="email" name="email" placeholder="Email" required>
             <input type="password" name="password" placeholder="Пароль" required>
             <button type="submit" class="button" id="authSubmitButton">Войти</button>
-            <button type="button" class="button" style="background: #666;" onclick="hideModal('authModal')">Отмена</button>
+            <button type="button" class="button" style="background: #666;"
+                onclick="hideModal('authModal')">Отмена</button>
         </form>
     </div>
 
@@ -380,14 +387,14 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const { latitude, longitude } = position.coords;
-                        
+
                         // Проверяем, находится ли позиция в границах Кыргызстана
                         if (kyrgyzstanBounds.contains([latitude, longitude])) {
                             // Удаляем предыдущий маркер, если он существует
                             if (userLocationMarker) {
                                 map.removeLayer(userLocationMarker);
                             }
-                            
+
                             // Создаем новый маркер
                             userLocationMarker = L.circleMarker([latitude, longitude], {
                                 radius: 8,
@@ -396,7 +403,7 @@
                                 color: '#fff',
                                 weight: 2
                             }).addTo(map);
-                            
+
                             // Центрируем карту на местоположении пользователя
                             map.setView([latitude, longitude], 14);
                         } else {
@@ -404,7 +411,7 @@
                         }
                     },
                     (error) => {
-                        switch(error.code) {
+                        switch (error.code) {
                             case error.PERMISSION_DENIED:
                                 alert('Для определения местоположения необходимо разрешить доступ к геолокации');
                                 break;
@@ -441,7 +448,7 @@
             const authTitle = document.getElementById('authTitle');
             const submitButton = document.getElementById('authSubmitButton');
             const form = document.getElementById('authForm');
-            
+
             form.reset();
 
             if (type === 'login') {
@@ -453,7 +460,7 @@
                 authTitle.textContent = 'Регистрация';
                 submitButton.textContent = 'Зарегистрироваться';
             }
-            
+
             modal.setAttribute('data-type', type);
             showModal('authModal');
         }
@@ -466,24 +473,24 @@
             showModal('addMarkerModal');
         }
 
-        document.getElementById('authForm').addEventListener('submit', function(e) {
+        document.getElementById('authForm').addEventListener('submit', function (e) {
             e.preventDefault();
             const type = document.getElementById('authModal').getAttribute('data-type');
             const email = this.email.value;
             const password = this.password.value;
-            
+
             if (type === 'register') {
                 // Проверяем, не существует ли уже такой email
                 if (users.some(u => u.email === email)) {
                     alert('Пользователь с таким email уже существует');
                     return;
                 }
-                
+
                 // Добавляем нового пользователя
                 const name = this.name.value || email;
                 const newUser = { email, password, name };
                 users.push(newUser);
-                
+
                 // Автоматически логиним нового пользователя
                 isAuthenticated = true;
                 currentUser = newUser;
@@ -493,7 +500,7 @@
             } else {
                 // Логика входа
                 const user = users.find(u => u.email === email && u.password === password);
-                
+
                 if (user) {
                     isAuthenticated = true;
                     currentUser = user;
@@ -505,9 +512,9 @@
             }
         });
 
-        document.querySelector('#addMarkerModal form').addEventListener('submit', function(e) {
+        document.querySelector('#addMarkerModal form').addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             // Получаем значения из формы
             const crimeType = this.querySelector('select').value;
             const address = this.querySelector('input[type="text"]').value;
@@ -523,15 +530,15 @@
                 status: 'pending',
                 userId: currentUser?.email
             };
-            
+
             console.log('Отправлено на модерацию:', report);
-            
+
             // Очищаем форму
             this.reset();
-            
+
             // Закрываем модальное окно
             hideModal('addMarkerModal');
-            
+
             alert('Сообщение успешно отправлено на модерацию');
         });
 
@@ -560,4 +567,5 @@
         updateAuthButtons();
     </script>
 </body>
+
 </html>
